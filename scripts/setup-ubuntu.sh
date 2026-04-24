@@ -37,6 +37,8 @@ resolve_default_copilot_home_dir() {
     sudo_user_home="$(getent passwd "${SUDO_USER}" 2>/dev/null | cut -d: -f6 || true)"
     if [[ -n "${sudo_user_home}" ]]; then
       config_home="${sudo_user_home}"
+    else
+      warn "Could not resolve home directory for ${SUDO_USER}; falling back to ${HOME}/.copilot"
     fi
   fi
 
