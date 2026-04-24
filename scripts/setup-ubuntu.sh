@@ -7,8 +7,6 @@ SERVER_NAME="${SERVER_NAME:-ado-git}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 VENV_DIR="${REPO_ROOT}/.venv"
-COPILOT_HOME_DIR="${COPILOT_HOME:-${HOME}/.copilot}"
-MCP_CONFIG_PATH="${COPILOT_HOME_DIR}/mcp-config.json"
 ORG_URL="${AZURE_DEVOPS_ORG_URL:-}"
 WRITE_PAT_TO_MCP_CONFIG=false
 
@@ -26,6 +24,27 @@ die() {
   printf '[setup] error: %s\n' "$*" >&2
   exit 1
 }
+
+resolve_default_copilot_home_dir() {
+  if [[ -n "${COPILOT_HOME:-}" ]]; then
+    printf '%s\n' "${COPILOT_HOME}"
+    return
+  fi
+
+  local config_home="${HOME}"
+  if [[ "${EUID}" -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    local sudo_user_home=""
+    sudo_user_home="$(getent passwd "${SUDO_USER}" 2>/dev/null | cut -d: -f6 || true)"
+    if [[ -n "${sudo_user_home}" ]]; then
+      config_home="${sudo_user_home}"
+    fi
+  fi
+
+  printf '%s/.copilot\n' "${config_home}"
+}
+
+COPILOT_HOME_DIR="$(resolve_default_copilot_home_dir)"
+MCP_CONFIG_PATH="${COPILOT_HOME_DIR}/mcp-config.json"
 
 usage() {
   cat <<EOF

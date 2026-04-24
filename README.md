@@ -113,6 +113,9 @@ What the script does:
 - creates `.venv` in the repository and runs `pip install -e .`
 - writes the MCP entry to `~/.copilot/mcp-config.json` (or `$COPILOT_HOME/mcp-config.json`)
 
+If you run the script with `sudo`, it still writes the default Copilot CLI MCP config
+to the invoking user's `~/.copilot/mcp-config.json` instead of `/root/.copilot`.
+
 If you want to store a PAT in the Copilot MCP config as well, export it first and
 add `--write-pat`:
 
