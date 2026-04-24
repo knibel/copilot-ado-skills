@@ -111,6 +111,24 @@ ensure_python_toolchain() {
   fi
 
   python3 -m pip --version >/dev/null 2>&1 || die "python3-pip could not be installed"
+
+  if python3 -m venv --help >/dev/null 2>&1; then
+    return
+  fi
+
+  local python_minor versioned_venv_package
+  python_minor="$(python3 - <<'PY'
+import sys
+print(f"{sys.version_info.major}.{sys.version_info.minor}")
+PY
+)"
+  versioned_venv_package="python${python_minor}-venv"
+
+  log "Installing ${versioned_venv_package} for the active python3 interpreter"
+  apt_install "${versioned_venv_package}"
+
+  python3 -m venv --help >/dev/null 2>&1 \
+    || die "python venv support is still unavailable after installing ${versioned_venv_package}"
 }
 
 install_nodesource_repo() {

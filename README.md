@@ -107,7 +107,7 @@ chmod +x ./scripts/setup-ubuntu.sh
 What the script does:
 
 - checks `python3`, `pip`, `node`, and `npm`
-- installs missing Ubuntu/Debian packages with `apt`
+- installs missing Ubuntu/Debian packages with `apt` and falls back to the active `python3.x-venv` package when needed
 - installs Node.js 22.x when the system version is too old for Copilot CLI
 - installs GitHub Copilot CLI with `npm install -g @github/copilot` if `copilot` is missing
 - creates `.venv` in the repository and runs `pip install -e .`
