@@ -33,8 +33,11 @@ resolve_default_copilot_home_dir() {
 
   local config_home="${HOME}"
   if [[ "${EUID}" -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    local passwd_entry=""
     local sudo_user_home=""
-    sudo_user_home="$(getent passwd "${SUDO_USER}" 2>/dev/null | cut -d: -f6 || true)"
+    if passwd_entry="$(getent passwd "${SUDO_USER}" 2>/dev/null)"; then
+      sudo_user_home="$(printf '%s\n' "${passwd_entry}" | cut -d: -f6)"
+    fi
     if [[ -n "${sudo_user_home}" ]]; then
       config_home="${sudo_user_home}"
     else
