@@ -93,6 +93,36 @@ python3 -m pip install -e .
 
 If you are on Windows, replace `python3` with `py`.
 
+#### Ubuntu / Debian helper script
+
+If you want one command that installs the required system dependencies, installs
+GitHub Copilot CLI, installs this MCP server into a local virtual environment,
+and writes the Copilot CLI MCP configuration automatically, run:
+
+```bash
+chmod +x ./scripts/setup-ubuntu.sh
+./scripts/setup-ubuntu.sh --org-url "https://dev.azure.com/<your-org>"
+```
+
+What the script does:
+
+- checks `python3`, `pip`, `node`, and `npm`
+- installs missing Ubuntu/Debian packages with `apt`
+- installs Node.js 22.x when the system version is too old for Copilot CLI
+- installs GitHub Copilot CLI with `npm install -g @github/copilot` if `copilot` is missing
+- creates `.venv` in the repository and runs `pip install -e .`
+- writes the MCP entry to `~/.copilot/mcp-config.json` (or `$COPILOT_HOME/mcp-config.json`)
+
+If you want to store a PAT in the Copilot MCP config as well, export it first and
+add `--write-pat`:
+
+```bash
+export AZURE_DEVOPS_PAT="<your-pat>"
+./scripts/setup-ubuntu.sh \
+  --org-url "https://dev.azure.com/<your-org>" \
+  --write-pat
+```
+
 #### 2. Configure Azure DevOps authentication
 
 Use **one** of these options:
