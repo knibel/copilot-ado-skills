@@ -116,13 +116,13 @@ ensure_python_toolchain() {
     return
   fi
 
-  local python_minor versioned_venv_package
-  python_minor="$(python3 - <<'PY'
+  local python_version versioned_venv_package
+  python_version="$(python3 - <<'PY'
 import sys
 print(f"{sys.version_info.major}.{sys.version_info.minor}")
 PY
 )"
-  versioned_venv_package="python${python_minor}-venv"
+  versioned_venv_package="python${python_version}-venv"
 
   log "Installing ${versioned_venv_package} for the active python3 interpreter"
   apt_install "${versioned_venv_package}"
