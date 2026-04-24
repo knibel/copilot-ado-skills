@@ -79,6 +79,107 @@ python -m ado_git_skill.server
 
 The server communicates over **stdio** (standard MCP transport) so it can be registered in any MCP host.
 
+### GitHub Copilot CLI
+
+You do **not** put this repository in a special Copilot "skills" folder. Since this project is an **MCP server**, you can clone it anywhere on your machine and then register it in Copilot CLI.
+
+#### 1. Clone and install the server locally
+
+```bash
+git clone https://github.com/knibel/copilot-ado-skills.git
+cd copilot-ado-skills
+python3 -m pip install -e .
+```
+
+If you are on Windows, replace `python3` with `py`.
+
+#### 2. Configure Azure DevOps authentication
+
+Use **one** of these options:
+
+```bash
+# Option A: Azure CLI login
+az login
+
+# Option B: Personal Access Token
+export AZURE_DEVOPS_PAT="<your-pat>"
+```
+
+Then set your Azure DevOps organization URL:
+
+```bash
+export AZURE_DEVOPS_ORG_URL="https://dev.azure.com/<your-org>"
+```
+
+#### 3. Register the MCP server in Copilot CLI
+
+Create or edit `~/.copilot/mcp-config.json` and add:
+
+```json
+{
+  "mcpServers": {
+    "ado-git": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "ado_git_skill.server"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/<your-org>"
+      },
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+If you want to use a PAT instead of `az login`, include it in the same `env` block:
+
+```json
+{
+  "mcpServers": {
+    "ado-git": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "ado_git_skill.server"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/<your-org>",
+        "AZURE_DEVOPS_PAT": "<your-pat>"
+      },
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+#### 4. Start Copilot CLI and verify the server
+
+Start Copilot CLI:
+
+```bash
+copilot
+```
+
+Then run:
+
+```text
+/mcp show
+```
+
+You should see `ado-git` listed. To inspect it directly:
+
+```text
+/mcp show ado-git
+```
+
+#### 5. Use it
+
+Once the server is listed, you can prompt Copilot CLI normally, for example:
+
+```text
+List the Azure DevOps repositories in project MyProject using the ado-git MCP server.
+```
+
+If Copilot CLI asks you to trust the current directory or approve MCP tool usage, approve the repository directory and the `ado-git` server/tools you want to use.
+
 ### VS Code / GitHub Copilot (`settings.json`)
 
 ```json
