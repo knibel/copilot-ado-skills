@@ -49,6 +49,10 @@ az login
 
 The skill automatically calls `AzureCliCredential` from `azure-identity` to obtain a bearer token for the Azure DevOps resource ID (`499b84ac-1321-427f-aa17-267ca6975798`).
 
+For git remote operations such as clone, pull, and push, the MCP tools reuse
+those credentials non-interactively so git does not stop and wait for a
+username/password prompt.
+
 ### Option 2 – Personal Access Token
 
 ```bash

@@ -13,7 +13,12 @@ from typing import Any
 
 import requests
 
-from ado_git_skill.auth import get_connection, get_credentials, get_organization_url
+from ado_git_skill.auth import (
+    get_connection,
+    get_credentials,
+    get_oauth_access_token,
+    get_organization_url,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -212,11 +217,9 @@ def search_code(
             "Authorization": f"Basic {token}",
         }
     else:
-        # OAuthTokenAuthentication stores token in the 'token' dict
-        access_token = creds.token.get("access_token", "")
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
+            "Authorization": f"Bearer {get_oauth_access_token(creds)}",
         }
 
     response = requests.post(search_url, headers=headers, json=payload, timeout=30)
