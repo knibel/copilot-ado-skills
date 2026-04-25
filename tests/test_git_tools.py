@@ -6,9 +6,8 @@ All tests use temporary directories and do NOT require a remote repository.
 
 from __future__ import annotations
 
-import os
-import textwrap
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import git as gitpython
@@ -48,6 +47,34 @@ def test_clone_repository(repo_dir: Path, tmp_path: Path) -> None:
     assert result["status"] == "cloned"
     assert Path(result["path"]).exists()
     assert "branch" in result
+
+
+@patch("ado_git_skill.tools.git_tools.Repo.clone_from")
+@patch("ado_git_skill.tools.git_tools.get_git_environment")
+def test_clone_repository_uses_noninteractive_git_env(
+    mock_get_git_environment: MagicMock,
+    mock_clone_from: MagicMock,
+    tmp_path: Path,
+) -> None:
+    dest = str(tmp_path / "clone")
+    mock_get_git_environment.return_value = {
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "Never",
+    }
+    repo = MagicMock()
+    repo.active_branch.name = "main"
+    mock_clone_from.return_value = repo
+
+    git_tools.clone_repository("https://dev.azure.com/org/project/_git/repo", dest)
+
+    mock_get_git_environment.assert_called_once_with(
+        "https://dev.azure.com/org/project/_git/repo"
+    )
+    mock_clone_from.assert_called_once_with(
+        "https://dev.azure.com/org/project/_git/repo",
+        dest,
+        env=mock_get_git_environment.return_value,
+    )
 
 
 # ---------------------------------------------------------------------------

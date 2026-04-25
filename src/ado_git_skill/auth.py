@@ -9,6 +9,7 @@ Supports authentication via:
 
 from __future__ import annotations
 
+import base64
 import os
 
 from azure.devops.connection import Connection
@@ -60,3 +61,34 @@ def get_connection(organization_url: str | None = None) -> Connection:
     url = get_organization_url(organization_url)
     creds = get_credentials()
     return Connection(base_url=url, creds=creds)
+
+
+def get_git_environment(remote_url: str | None = None) -> dict[str, str]:
+    """Return environment variables for non-interactive authenticated git commands."""
+    env = {
+        "GIT_TERMINAL_PROMPT": "0",
+        "GCM_INTERACTIVE": "Never",
+    }
+    if not remote_url or not remote_url.lower().startswith(("http://", "https://")):
+        return env
+
+    creds = get_credentials()
+    if isinstance(creds, BasicAuthentication):
+        token = base64.b64encode(f":{creds.password}".encode()).decode()
+        auth_header = f"Authorization: Basic {token}"
+    else:
+        access_token = creds.token.get("access_token", "")
+        if not access_token:
+            raise ValueError(
+                "Azure CLI credentials did not provide an Azure DevOps access token."
+            )
+        auth_header = f"Authorization: Bearer {access_token}"
+
+    env.update(
+        {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "http.extraHeader",
+            "GIT_CONFIG_VALUE_0": auth_header,
+        }
+    )
+    return env

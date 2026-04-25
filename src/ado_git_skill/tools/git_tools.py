@@ -8,12 +8,13 @@ via GitPython.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
 import git
 from git import InvalidGitRepositoryError, Repo
+
+from ado_git_skill.auth import get_git_environment
 
 
 def _repo(working_dir: str) -> Repo:
@@ -22,6 +23,14 @@ def _repo(working_dir: str) -> Repo:
         return Repo(working_dir)
     except InvalidGitRepositoryError as exc:
         raise ValueError(f"'{working_dir}' is not a git repository.") from exc
+
+
+def _remote_url(repo: Repo, remote: str) -> str | None:
+    """Return the configured URL for *remote*, if present."""
+    for configured_remote in repo.remotes:
+        if configured_remote.name == remote:
+            return configured_remote.url
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +64,12 @@ def clone_repository(
     if branch:
         kwargs["branch"] = branch
 
-    repo = Repo.clone_from(remote_url, destination, **kwargs)
+    repo = Repo.clone_from(
+        remote_url,
+        destination,
+        env=get_git_environment(remote_url),
+        **kwargs,
+    )
     try:
         active_branch = repo.active_branch.name
     except TypeError:
@@ -184,7 +198,8 @@ def push_changes(
     push_args = [remote, f"refs/heads/{target_branch}:refs/heads/{target_branch}"]
     if set_upstream:
         push_args = ["-u"] + push_args
-    repo.git.push(*push_args)
+    with repo.git.custom_environment(**get_git_environment(_remote_url(repo, remote))):
+        repo.git.push(*push_args)
     return {"status": "pushed", "remote": remote, "branch": target_branch}
 
 
@@ -212,7 +227,8 @@ def pull_changes(
     """
     repo = _repo(working_dir)
     target_branch = branch or repo.active_branch.name
-    repo.git.pull(remote, target_branch)
+    with repo.git.custom_environment(**get_git_environment(_remote_url(repo, remote))):
+        repo.git.pull(remote, target_branch)
     return {"status": "pulled", "remote": remote, "branch": target_branch}
 
 
