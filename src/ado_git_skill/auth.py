@@ -63,6 +63,21 @@ def get_connection(organization_url: str | None = None) -> Connection:
     return Connection(base_url=url, creds=creds)
 
 
+def get_oauth_access_token(creds: OAuthTokenAuthentication) -> str:
+    """Extract the Azure DevOps bearer token from OAuth credentials."""
+    token_data = getattr(creds, "token", None)
+    if isinstance(token_data, dict):
+        access_token = token_data.get("access_token", "")
+    else:
+        access_token = ""
+
+    if not access_token:
+        raise ValueError(
+            "Azure CLI credentials did not provide an Azure DevOps access token."
+        )
+    return access_token
+
+
 def get_git_environment(remote_url: str | None = None) -> dict[str, str]:
     """Return environment variables for non-interactive authenticated git commands."""
     env = {
@@ -77,13 +92,7 @@ def get_git_environment(remote_url: str | None = None) -> dict[str, str]:
         token = base64.b64encode(f":{creds.password}".encode()).decode()
         auth_header = f"Authorization: Basic {token}"
     else:
-        token_data = getattr(creds, "token", {})
-        access_token = token_data.get("access_token", "") if isinstance(token_data, dict) else ""
-        if not access_token:
-            raise ValueError(
-                "Azure CLI credentials did not provide an Azure DevOps access token."
-            )
-        auth_header = f"Authorization: Bearer {access_token}"
+        auth_header = f"Authorization: Bearer {get_oauth_access_token(creds)}"
 
     env.update(
         {
