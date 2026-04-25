@@ -77,7 +77,8 @@ def get_git_environment(remote_url: str | None = None) -> dict[str, str]:
         token = base64.b64encode(f":{creds.password}".encode()).decode()
         auth_header = f"Authorization: Basic {token}"
     else:
-        access_token = creds.token.get("access_token", "")
+        token_data = getattr(creds, "token", {})
+        access_token = token_data.get("access_token", "") if isinstance(token_data, dict) else ""
         if not access_token:
             raise ValueError(
                 "Azure CLI credentials did not provide an Azure DevOps access token."

@@ -123,4 +123,7 @@ def test_get_git_environment_uses_azure_cli_token(
 
     env = auth.get_git_environment("https://dev.azure.com/org/project/_git/repo")
 
+    mock_cli_cred.return_value.get_token.assert_called_once_with(
+        "499b84ac-1321-427f-aa17-267ca6975798/.default"
+    )
     assert env["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer cli-access-token"
