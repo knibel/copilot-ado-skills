@@ -79,6 +79,80 @@ python -m ado_git_skill.server
 
 The server communicates over **stdio** (standard MCP transport) so it can be registered in any MCP host.
 
+---
+
+## How MCP works with Copilot CLI
+
+### How Copilot CLI finds the server
+
+Copilot CLI does **not** reach out to a URL or a network port to find this server. Instead, it reads a local configuration file at startup:
+
+```
+~/.copilot/mcp-config.json   (Linux / macOS)
+%USERPROFILE%\.copilot\mcp-config.json   (Windows)
+```
+
+Each entry under `"mcpServers"` tells Copilot CLI *how to launch* a server process. For example:
+
+```json
+{
+  "mcpServers": {
+    "ado-git": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "ado_git_skill.server"]
+    }
+  }
+}
+```
+
+When Copilot CLI starts, it reads this file and **spawns each registered server as a child process** using the `command` + `args` listed. No network socket or port is involved.
+
+### The `stdio` transport
+
+`"type": "stdio"` means the MCP host (Copilot CLI) and the server communicate through the child process's **standard input and output streams** (stdin/stdout). The server never opens a TCP port; it simply reads JSON messages from stdin and writes JSON responses to stdout. This makes it safe to run entirely locally without exposing any network service.
+
+### End-to-end communication flow
+
+```
+User types a prompt in Copilot CLI
+         │
+         ▼
+Copilot CLI reads ~/.copilot/mcp-config.json
+  └─ spawns: python3 -m ado_git_skill.server  (child process)
+         │
+         ▼ MCP JSON-RPC handshake (over stdin/stdout)
+  1. initialize          ← Copilot sends capabilities
+  2. initialize result   → server replies with its capabilities
+  3. tools/list          ← Copilot asks what tools are available
+  4. tools/list result   → server returns the list of tool definitions
+         │
+         ▼ Copilot passes prompt + available tools to the LLM
+         │
+         ▼ LLM decides a tool is needed (e.g. list_repositories)
+  5. tools/call          ← Copilot sends tool name + arguments
+  6. tools/call result   → server executes the Azure DevOps API call
+                            and returns structured data
+         │
+         ▼ LLM composes the final answer using the tool result
+         │
+         ▼
+User sees the response in Copilot CLI
+```
+
+Steps 5 and 6 repeat for every tool the LLM needs to invoke to answer the prompt. The server process stays alive for the entire Copilot CLI session, so the handshake (steps 1–4) only happens once.
+
+### Why there is no "server URL" to configure
+
+Because the transport is `stdio`, the only thing Copilot needs to know is:
+
+- **which executable to run** (`command` + `args`)
+- **which environment variables to set** (`env` block in the config)
+
+The `AZURE_DEVOPS_ORG_URL` and `AZURE_DEVOPS_PAT` values in the `env` block are injected into the server process's environment at launch time, so the server always has the right credentials without you exporting them globally.
+
+---
+
 ### GitHub Copilot CLI
 
 You do **not** put this repository in a special Copilot "skills" folder. Since this project is an **MCP server**, you can clone it anywhere on your machine and then register it in Copilot CLI.
