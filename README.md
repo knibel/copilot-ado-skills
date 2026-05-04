@@ -219,8 +219,10 @@ export AZURE_DEVOPS_PAT="<your-pat>"
 #### Option B – Built-in skill (when MCP is unavailable)
 
 Use this mode when the Copilot CLI MCP server feature is disabled or
-unavailable.  Instead of running a long-lived server process, Copilot CLI
-invokes a one-shot command for every function call:
+unavailable.  Instead of running a long-lived server process, Copilot reads a
+`SKILL.md` file that describes the available tools and how to invoke them.
+When Copilot needs to call a tool it runs `copilot-ado-skills-invoke` as a
+one-shot subprocess:
 
 ```
 Copilot CLI  →  echo '<json params>'  |  copilot-ado-skills-invoke <function>  →  stdout JSON
@@ -240,9 +242,9 @@ What the script does:
 
 - same Python / Node / Copilot CLI dependency checks as `setup-ubuntu.sh`
 - creates `.venv` in the repository and runs `pip install -e .` (installs the `copilot-ado-skills-invoke` binary)
-- writes a skill YAML manifest to `~/.copilot/skills/ado-git.yaml` (or `$COPILOT_HOME/skills/ado-git.yaml`) that describes all tools and their invocation commands
+- writes a skill file to `~/.copilot/skills/ado-git/SKILL.md` (or `$COPILOT_HOME/skills/ado-git/SKILL.md`) in the standard `SKILL.md` format that Copilot CLI recognises
 
-To persist a PAT inside the manifest, export it first and add `--write-pat`:
+To persist a PAT inside the skill file, export it first and add `--write-pat`:
 
 ```bash
 export AZURE_DEVOPS_PAT="<your-pat>"
@@ -256,8 +258,8 @@ Available options:
 | Option | Description |
 |---|---|
 | `--org-url URL` | Azure DevOps organisation URL (required) |
-| `--skill-name NAME` | Skill name in the manifest (default: `ado-git`) |
-| `--write-pat` | Persist `AZURE_DEVOPS_PAT` into the manifest |
+| `--skill-name NAME` | Skill name (default: `ado-git`) |
+| `--write-pat` | Persist `AZURE_DEVOPS_PAT` into the skill file |
 
 ##### Manual one-shot invocation
 
