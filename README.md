@@ -159,9 +159,22 @@ The `AZURE_DEVOPS_ORG_URL` and `AZURE_DEVOPS_PAT` values in the `env` block are 
 
 ### GitHub Copilot CLI
 
+There are **two ways** to install this skill with Copilot CLI:
+
+| Mode | When to use |
+|---|---|
+| **MCP server** (`setup-ubuntu.sh`) | Default – recommended when MCP support is enabled |
+| **Built-in skill** (`setup-skill-ubuntu.sh`) | Alternative – when MCP support is unavailable or disabled |
+
+Both modes expose the same set of tools.
+
+---
+
+#### Option A – MCP server (default)
+
 You do **not** put this repository in a special Copilot "skills" folder. Since this project is an **MCP server**, you can clone it anywhere on your machine and then register it in Copilot CLI.
 
-#### 1. Clone and install the server locally
+##### 1. Clone and install the server locally
 
 ```bash
 git clone https://github.com/knibel/copilot-ado-skills.git
@@ -171,7 +184,7 @@ python3 -m pip install -e .
 
 If you are on Windows, replace `python3` with `py`.
 
-#### Ubuntu / Debian helper script
+##### Ubuntu / Debian helper script
 
 If you want one command that installs the required system dependencies, installs
 GitHub Copilot CLI, installs this MCP server into a local virtual environment,
@@ -201,7 +214,70 @@ export AZURE_DEVOPS_PAT="<your-pat>"
   --write-pat
 ```
 
-#### 2. Configure Azure DevOps authentication
+---
+
+#### Option B – Built-in skill (when MCP is unavailable)
+
+Use this mode when the Copilot CLI MCP server feature is disabled or
+unavailable.  Instead of running a long-lived server process, Copilot CLI
+invokes a one-shot command for every function call:
+
+```
+Copilot CLI  →  echo '<json params>'  |  copilot-ado-skills-invoke <function>  →  stdout JSON
+```
+
+No server process is started; each function call is an independent subprocess
+invocation.
+
+##### Ubuntu / Debian helper script
+
+```bash
+chmod +x ./scripts/setup-skill-ubuntu.sh
+./scripts/setup-skill-ubuntu.sh --org-url "https://dev.azure.com/<your-org>"
+```
+
+What the script does:
+
+- same Python / Node / Copilot CLI dependency checks as `setup-ubuntu.sh`
+- creates `.venv` in the repository and runs `pip install -e .` (installs the `copilot-ado-skills-invoke` binary)
+- writes a skill YAML manifest to `~/.copilot/skills/ado-git.yaml` (or `$COPILOT_HOME/skills/ado-git.yaml`) that describes all tools and their invocation commands
+
+To persist a PAT inside the manifest, export it first and add `--write-pat`:
+
+```bash
+export AZURE_DEVOPS_PAT="<your-pat>"
+./scripts/setup-skill-ubuntu.sh \
+  --org-url "https://dev.azure.com/<your-org>" \
+  --write-pat
+```
+
+Available options:
+
+| Option | Description |
+|---|---|
+| `--org-url URL` | Azure DevOps organisation URL (required) |
+| `--skill-name NAME` | Skill name in the manifest (default: `ado-git`) |
+| `--write-pat` | Persist `AZURE_DEVOPS_PAT` into the manifest |
+
+##### Manual one-shot invocation
+
+You can also call `copilot-ado-skills-invoke` directly to test a function:
+
+```bash
+echo '{"working_dir": "/path/to/repo"}' \
+  | .venv/bin/copilot-ado-skills-invoke get_status
+```
+
+```bash
+echo '{"project": "MyProject"}' \
+  | .venv/bin/copilot-ado-skills-invoke list_repositories
+```
+
+The binary reads JSON parameters from **stdin** and writes the JSON result to
+**stdout**, making it easy to pipe, script, or integrate with any tool that
+supports subprocess invocation.
+
+##### 2. Configure Azure DevOps authentication
 
 Use **one** of these options:
 
@@ -219,7 +295,7 @@ Then set your Azure DevOps organization URL:
 export AZURE_DEVOPS_ORG_URL="https://dev.azure.com/<your-org>"
 ```
 
-#### 3. Register the MCP server in Copilot CLI
+##### 3. Register the MCP server in Copilot CLI
 
 Create or edit `~/.copilot/mcp-config.json` and add:
 
@@ -258,7 +334,7 @@ If you want to use a PAT instead of `az login`, include it in the same `env` blo
 }
 ```
 
-#### 4. Start Copilot CLI and verify the server
+##### 4. Start Copilot CLI and verify the server
 
 Start Copilot CLI:
 
@@ -278,7 +354,7 @@ You should see `ado-git` listed. To inspect it directly:
 /mcp show ado-git
 ```
 
-#### 5. Use it
+##### 5. Use it
 
 Once the server is listed, you can prompt Copilot CLI normally, for example:
 
