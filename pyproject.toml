@@ -27,6 +27,7 @@ dev = [
 
 [project.scripts]
 copilot-ado-skills = "ado_git_skill.server:main"
+copilot-ado-skills-invoke = "ado_git_skill.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ado_git_skill"]
