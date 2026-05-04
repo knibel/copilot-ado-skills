@@ -293,7 +293,7 @@ schema_version: v1
 name: {skill_name}
 description: >-
   Azure DevOps Git skill. Provides git operations, pull-request management,
-  and repository/code search against Azure DevOps organisations.
+  and repository/code search against Azure DevOps organizations.
 
 # Environment variables injected into every invocation of this skill.
 # These values are written at install time by setup-skill-ubuntu.sh.

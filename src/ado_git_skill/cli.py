@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         result = _dispatch(function_name, parameters)
     except Exception as exc:  # noqa: BLE001
-        result = {"error": str(exc)}
+        result = {"error": str(exc), "type": type(exc).__name__}
 
     print(json.dumps(result, indent=2, default=str))
 
